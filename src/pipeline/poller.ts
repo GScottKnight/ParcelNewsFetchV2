@@ -4,6 +4,8 @@ import { logger } from "../logger";
 import { loadConfig } from "../config/env";
 import type { RawNewsArticle } from "../types/news";
 import type { RawArticleRepository } from "../storage/rawArticleRepository";
+import { PostgresRawArticleRepository } from "../storage/postgresRawArticleRepository";
+import { InMemoryRawArticleRepository } from "../storage/memoryRawArticleRepository";
 import { fetchArticleContent } from "../content/fetchArticleContent";
 
 type SourceFetcher = (context: FetchContext) => Promise<{ source: string; articles: RawNewsArticle[] }>;
@@ -101,4 +103,10 @@ export async function startPolling(rawRepo: RawArticleRepository): Promise<void>
       void runPollOnce(rawRepo);
     }, newsPollIntervalSec * 1000);
   }
+}
+
+export function makeRawRepo(): RawArticleRepository {
+  const hasDb = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+  if (hasDb) return new PostgresRawArticleRepository();
+  return new InMemoryRawArticleRepository();
 }

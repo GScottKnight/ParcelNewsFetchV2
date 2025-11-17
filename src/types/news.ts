@@ -11,6 +11,7 @@ export interface RawNewsArticle {
   tickers: string[];
   channels?: string[];
   body?: string;
+  ingestionStatus?: "new" | "processed" | "failed";
 }
 
 export interface NewsFetchResult {

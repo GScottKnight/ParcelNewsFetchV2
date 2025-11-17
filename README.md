@@ -16,6 +16,7 @@ npm run build
 - Article body fetch: enabled by default; set `FETCH_ARTICLE_BODY=false` to skip. Body fetch timeout via `ARTICLE_BODY_FETCH_TIMEOUT_MS` (default 8000ms).
 - HTML scraping fallback can be disabled: set `FETCH_ARTICLE_BODY_SCRAPE=false` (default) to rely solely on API-provided bodies; set to `true` only if you want to scrape URLs when the API omits body.
 - For a single poll run (useful in CI/tests), set `POLL_ONCE=true`.
+- Persistence: if `DATABASE_URL` (or `NEON_DATABASE_URL`) is set, the poller uses Postgres with dedupe on `(source, url)`. Otherwise it falls back to in-memory for local smoke tests.
 
 ## Netlify
 - Build command: `npm run build`
