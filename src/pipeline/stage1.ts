@@ -82,7 +82,11 @@ function classifyFallback(article: RawNewsArticle): Stage1RelevanceResult {
   };
 }
 
-export async function runStage1(repo: RawArticleRepository, articles: RawNewsArticle[]): Promise<void> {
+export async function runStage1(
+  repo: RawArticleRepository,
+  articles: RawNewsArticle[],
+  onResult?: (article: RawNewsArticle, result: Stage1RelevanceResult) => Promise<void>,
+): Promise<void> {
   if (!articles.length) return;
   const { stage1DryRun, openAiApiKey } = loadConfig();
   for (const article of articles) {
@@ -99,6 +103,9 @@ export async function runStage1(repo: RawArticleRepository, articles: RawNewsArt
         is_relevant: result.is_relevant,
         confidence: result.confidence,
       });
+      if (onResult) {
+        await onResult(article, result);
+      }
       await repo.markStatus([article], "processed");
     } catch (err) {
       logger.error("Stage1 classification failed", {

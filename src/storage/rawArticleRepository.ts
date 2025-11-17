@@ -4,6 +4,7 @@ export interface RawArticleRepository {
   hasSeen(article: RawNewsArticle): Promise<boolean>;
   markSeen(articles: RawNewsArticle[]): Promise<void>;
   markStatus(articles: RawNewsArticle[], status: "new" | "processed" | "failed"): Promise<void>;
+  fetchUnprocessed?(limit: number): Promise<{ dbId: number; article: RawNewsArticle }[]>;
 }
 
 // Generate a consistent key for deduping raw articles

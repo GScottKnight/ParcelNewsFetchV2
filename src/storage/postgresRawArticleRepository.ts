@@ -65,6 +65,35 @@ export class PostgresRawArticleRepository implements RawArticleRepository {
     await pool.query(sql, values);
   }
 
+  async fetchUnprocessed(limit: number): Promise<{ dbId: number; article: RawNewsArticle }[]> {
+    const pool = getPool();
+    const res = await pool.query(
+      `
+      select id, external_id, source, url, title, published_at, updated_at, tickers, channels, body
+      from raw_articles
+      where ingestion_status = 'new'
+      order by published_at desc
+      limit $1
+    `,
+      [limit],
+    );
+    return res.rows.map((r) => ({
+      dbId: r.id,
+      article: {
+        id: r.external_id,
+        source: r.source,
+        url: r.url,
+        title: r.title,
+        publishedAt: r.published_at,
+        updatedAt: r.updated_at,
+        tickers: Array.isArray(r.tickers) ? r.tickers : [],
+        channels: Array.isArray(r.channels) ? r.channels : [],
+        body: r.body || undefined,
+        sourceTier: "other",
+      },
+    }));
+  }
+
   // Utility to allow testing of dedupe keys
   makeKey(article: RawNewsArticle): string {
     return rawArticleKey(article);
