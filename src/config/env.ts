@@ -10,6 +10,10 @@ export type AppConfig = {
   fetchArticleBody: boolean;
   fetchArticleBodyScrape: boolean;
   articleBodyFetchTimeoutMs: number;
+  openAiApiKey?: string;
+  stage1Model: string;
+  stage1DryRun: boolean;
+  stage1MaxBodyChars: number;
 };
 
 function requireEnv(name: string, fallback?: string): string {
@@ -29,5 +33,9 @@ export function loadConfig(): AppConfig {
     fetchArticleBody: process.env.FETCH_ARTICLE_BODY !== "false",
     fetchArticleBodyScrape: process.env.FETCH_ARTICLE_BODY_SCRAPE === "true",
     articleBodyFetchTimeoutMs: Number(process.env.ARTICLE_BODY_FETCH_TIMEOUT_MS ?? "8000"),
+    openAiApiKey: process.env.OPENAI_API_KEY,
+    stage1Model: process.env.STAGE1_MODEL ?? "gpt-4o-mini",
+    stage1DryRun: process.env.STAGE1_DRY_RUN === "true" || !process.env.OPENAI_API_KEY,
+    stage1MaxBodyChars: Number(process.env.STAGE1_MAX_BODY_CHARS ?? "4000"),
   };
 }
