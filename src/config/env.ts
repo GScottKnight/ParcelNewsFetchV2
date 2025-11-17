@@ -7,6 +7,8 @@ export type AppConfig = {
   benzingaNewsPageSize: number;
   newsPollIntervalSec: number;
   newsDisplayOutput: string | undefined;
+  fetchArticleBody: boolean;
+  articleBodyFetchTimeoutMs: number;
 };
 
 function requireEnv(name: string, fallback?: string): string {
@@ -23,5 +25,7 @@ export function loadConfig(): AppConfig {
     benzingaNewsPageSize: Number(process.env.NEWS_PAGE_SIZE ?? "50"),
     newsPollIntervalSec: Number(process.env.NEWS_POLL_INTERVAL_SEC ?? "60"),
     newsDisplayOutput: process.env.NEWS_DISPLAY_OUTPUT ?? "full",
+    fetchArticleBody: process.env.FETCH_ARTICLE_BODY !== "false",
+    articleBodyFetchTimeoutMs: Number(process.env.ARTICLE_BODY_FETCH_TIMEOUT_MS ?? "8000"),
   };
 }

@@ -13,6 +13,7 @@ npm run build
   - Static site placeholder to `dist/` for Netlify.
   - Compiled TypeScript to `dist/server/` for pipeline code.
 - Ingestion poller (scaffold): `npm run dev` (after `npm run build`) — fetches Benzinga and placeholder Yahoo Finance.
+- Article body fetch: enabled by default; set `FETCH_ARTICLE_BODY=false` to skip. Body fetch timeout via `ARTICLE_BODY_FETCH_TIMEOUT_MS` (default 8000ms).
 - For a single poll run (useful in CI/tests), set `POLL_ONCE=true`.
 
 ## Netlify
