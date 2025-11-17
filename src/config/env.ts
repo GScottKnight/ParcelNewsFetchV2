@@ -22,6 +22,6 @@ export function loadConfig(): AppConfig {
     benzingaApiKey: requireEnv("BENZINGA_API_KEY"),
     benzingaNewsPageSize: Number(process.env.NEWS_PAGE_SIZE ?? "50"),
     newsPollIntervalSec: Number(process.env.NEWS_POLL_INTERVAL_SEC ?? "60"),
-    newsDisplayOutput: process.env.NEWS_DISPLAY_OUTPUT,
+    newsDisplayOutput: process.env.NEWS_DISPLAY_OUTPUT ?? "full",
   };
 }

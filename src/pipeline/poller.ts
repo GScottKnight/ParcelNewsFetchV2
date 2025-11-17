@@ -23,6 +23,9 @@ export async function runPollOnce(): Promise<void> {
 
 export async function startPolling(): Promise<void> {
   const { newsPollIntervalSec } = loadConfig();
+  const singleRun = process.env.POLL_ONCE === "true";
   await runPollOnce();
-  setInterval(runPollOnce, newsPollIntervalSec * 1000);
+  if (!singleRun) {
+    setInterval(runPollOnce, newsPollIntervalSec * 1000);
+  }
 }

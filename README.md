@@ -12,7 +12,8 @@ npm run build
 - Build outputs:
   - Static site placeholder to `dist/` for Netlify.
   - Compiled TypeScript to `dist/server/` for pipeline code.
-- Ingestion poller (scaffold): `npm run dev` (runs `src/index.ts`) — fetches Benzinga and placeholder Yahoo Finance.
+- Ingestion poller (scaffold): `npm run dev` (after `npm run build`) — fetches Benzinga and placeholder Yahoo Finance.
+- For a single poll run (useful in CI/tests), set `POLL_ONCE=true`.
 
 ## Netlify
 - Build command: `npm run build`
