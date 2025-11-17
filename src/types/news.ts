@@ -6,8 +6,10 @@ export interface RawNewsArticle {
   url: string;
   source: string;
   publishedAt: string; // ISO string
+  updatedAt?: string; // ISO string
   sourceTier: SourceTier;
   tickers: string[];
+  channels?: string[];
   body?: string;
 }
 

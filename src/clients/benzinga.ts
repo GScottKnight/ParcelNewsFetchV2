@@ -9,14 +9,17 @@ import { XMLParser } from "fast-xml-parser";
 const BENZINGA_BASE_URL = "https://api.benzinga.com/api/v2/news";
 
 type BenzingaResponseItem = {
-  id: number;
+  id: number | string;
   title: string;
   url: string;
-  created: string;
-  updated: string;
+  created?: string;
+  created_at?: string;
+  updated?: string;
+  updated_at?: string;
   teaser?: string;
   body?: string;
-  stocks?: string[];
+  stocks?: string[] | { item?: { name?: string } | { name?: string }[] };
+  securities?: { symbol?: string }[];
   author?: string;
   source?: string;
   channels?: { item?: { name?: string }[] } | { name?: string }[];
@@ -33,7 +36,7 @@ function normalizeTickers(stocks?: BenzingaResponseItem["stocks"] | Record<strin
   if (!stocks) return [];
   if (Array.isArray(stocks)) {
     // JSON format
-    return (stocks as unknown[]).map((s) => (typeof s === "string" ? s : "")).filter(Boolean);
+    return (stocks as unknown[]).map((s) => (typeof s === "string" ? s.toUpperCase() : "")).filter(Boolean);
   }
   const items = (stocks as any).item ?? [];
   const arr = Array.isArray(items) ? items : [items];
@@ -43,23 +46,35 @@ function normalizeTickers(stocks?: BenzingaResponseItem["stocks"] | Record<strin
       if (s?.name) return String(s.name);
       return "";
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((s) => s.toUpperCase());
 }
 
 function mapToRawArticle(item: BenzingaResponseItem): RawNewsArticle {
+  const created = item.created_at || item.created;
+  const updated = item.updated_at || item.updated || created;
+  const channels =
+    (item.channels as any)?.item?.map((c: any) => c?.name).filter(Boolean) ??
+    (Array.isArray((item as any).channels) ? (item as any).channels : []);
+  const securitiesTickers =
+    item.securities?.map((s) => (s.symbol ? s.symbol.toUpperCase() : "")).filter(Boolean) ?? [];
+
   return {
     id: String(item.id),
     title: item.title,
     url: item.url,
     source: item.source ?? "Benzinga",
-    publishedAt: item.updated || item.created,
+    publishedAt: updated || created || "",
+    updatedAt: updated || created || "",
     sourceTier: mapSourceToTier(item.source),
-    tickers: normalizeTickers(item.stocks as any),
+    tickers: normalizeTickers(item.stocks as any).concat(securitiesTickers),
+    channels,
     body: item.body ?? item.teaser,
   };
 }
 
 export async function fetchBenzingaNews(params?: {
+  updatedSince?: number; // unix seconds
   page?: number;
   pageSize?: number;
   tickers?: string[];
@@ -76,6 +91,7 @@ export async function fetchBenzingaNews(params?: {
     format: "json",
     display_output: newsDisplayOutput || "full",
   });
+  if (params?.updatedSince) searchParams.append("updatedSince", String(params.updatedSince));
   if (params?.tickers?.length) searchParams.append("tickers", params.tickers.join(","));
   if (params?.channels?.length) searchParams.append("channels", params.channels.join(","));
 
@@ -103,8 +119,11 @@ export async function fetchBenzingaNews(params?: {
     };
   }
 
-  const data = (await res.json()) as { data?: BenzingaResponseItem[] } | BenzingaResponseItem[];
-  const itemsArray = Array.isArray(data) ? data : data.data ?? [];
+  const data = (await res.json()) as
+    | { data?: BenzingaResponseItem[]; items?: BenzingaResponseItem[] }
+    | BenzingaResponseItem[]
+    | Record<string, BenzingaResponseItem>;
+  const itemsArray = normalizeItems(data);
   const articles = itemsArray.map(mapToRawArticle);
 
   return {
@@ -112,4 +131,16 @@ export async function fetchBenzingaNews(params?: {
     articles,
     nextCursor: itemsArray.length === pageSize ? String(page + 1) : undefined,
   };
+}
+
+function normalizeItems(data: any): BenzingaResponseItem[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.items)) return data.items;
+  if (typeof data === "object") {
+    const values = Object.values(data).filter((v) => typeof v === "object");
+    return values as BenzingaResponseItem[];
+  }
+  return [];
 }
