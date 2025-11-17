@@ -7,6 +7,7 @@ import type { RawArticleRepository } from "../storage/rawArticleRepository";
 import { PostgresRawArticleRepository } from "../storage/postgresRawArticleRepository";
 import { InMemoryRawArticleRepository } from "../storage/memoryRawArticleRepository";
 import { fetchArticleContent } from "../content/fetchArticleContent";
+import { runStage1 } from "./stage1";
 
 type SourceFetcher = (context: FetchContext) => Promise<{ source: string; articles: RawNewsArticle[] }>;
 
@@ -39,7 +40,7 @@ export async function runPollOnce(rawRepo: RawArticleRepository): Promise<void> 
           { source: result.source, scraped: fetchArticleBodyScrape },
         );
       }
-      // TODO: Persist deduped raw articles (with body when available) and enqueue for Stage 1 relevance.
+      await runStage1(rawRepo, deduped);
       if (result.source === "Benzinga") {
         const maxUpdated = getMaxUpdatedMs(deduped);
         if (maxUpdated) benzingaLastUpdatedMs = maxUpdated;

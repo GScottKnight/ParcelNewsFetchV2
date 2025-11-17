@@ -45,6 +45,26 @@ export class PostgresRawArticleRepository implements RawArticleRepository {
     await pool.query(sql, values);
   }
 
+  async markStatus(
+    articles: RawNewsArticle[],
+    status: "new" | "processed" | "failed",
+  ): Promise<void> {
+    if (!articles.length) return;
+    const pool = getPool();
+    const values: any[] = [];
+    const cases: string[] = [];
+    articles.forEach((a, idx) => {
+      values.push(a.source, a.url);
+      const base = idx * 2;
+      cases.push(`(source = $${base + 1} AND url = $${base + 2})`);
+    });
+    const sql = `update raw_articles set ingestion_status = $${values.length + 1} where ${cases.join(
+      " OR ",
+    )}`;
+    values.push(status);
+    await pool.query(sql, values);
+  }
+
   // Utility to allow testing of dedupe keys
   makeKey(article: RawNewsArticle): string {
     return rawArticleKey(article);
