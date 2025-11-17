@@ -14,6 +14,7 @@ npm run build
   - Compiled TypeScript to `dist/server/` for pipeline code.
 - Ingestion poller (scaffold): `npm run dev` (after `npm run build`) — fetches Benzinga and placeholder Yahoo Finance.
 - Article body fetch: enabled by default; set `FETCH_ARTICLE_BODY=false` to skip. Body fetch timeout via `ARTICLE_BODY_FETCH_TIMEOUT_MS` (default 8000ms).
+- HTML scraping fallback can be disabled: set `FETCH_ARTICLE_BODY_SCRAPE=false` (default) to rely solely on API-provided bodies; set to `true` only if you want to scrape URLs when the API omits body.
 - For a single poll run (useful in CI/tests), set `POLL_ONCE=true`.
 
 ## Netlify

@@ -21,7 +21,7 @@ const sources: SourceFetcher[] = [
 
 export async function runPollOnce(rawRepo: RawArticleRepository): Promise<void> {
   logger.info("Starting news poll");
-  const { fetchArticleBody } = loadConfig();
+  const { fetchArticleBody, fetchArticleBodyScrape } = loadConfig();
   const updatedSince = benzingaLastUpdatedMs ? Math.floor((benzingaLastUpdatedMs - 5000) / 1000) : undefined;
   const context: FetchContext = { benzingaUpdatedSince: updatedSince };
   for (const fetcher of sources) {
@@ -31,8 +31,11 @@ export async function runPollOnce(rawRepo: RawArticleRepository): Promise<void> 
       logger.info(`Fetched ${result.articles.length} articles`, { source: result.source });
       logger.info(`New articles after dedupe: ${deduped.length}`, { source: result.source });
       if (fetchArticleBody && deduped.length) {
-        const withBody = await hydrateBodies(deduped);
-        logger.info(`Articles with body fetched: ${withBody}`, { source: result.source });
+        const withBody = await hydrateBodies(deduped, fetchArticleBodyScrape);
+        logger.info(
+          `Articles with body present (API or scraped): ${withBody}`,
+          { source: result.source, scraped: fetchArticleBodyScrape },
+        );
       }
       // TODO: Persist deduped raw articles (with body when available) and enqueue for Stage 1 relevance.
       if (result.source === "Benzinga") {
@@ -60,17 +63,19 @@ async function dedupeNewArticles(
   return fresh;
 }
 
-async function hydrateBodies(articles: RawNewsArticle[]): Promise<number> {
+async function hydrateBodies(articles: RawNewsArticle[], allowScrape: boolean): Promise<number> {
   let withBody = 0;
   for (const article of articles) {
     if (article.body && article.body.trim().length > 0) {
       withBody += 1;
       continue;
     }
-    const text = await fetchArticleContent(article.url);
-    if (text) {
-      article.body = text;
-      withBody += 1;
+    if (allowScrape) {
+      const text = await fetchArticleContent(article.url);
+      if (text) {
+        article.body = text;
+        withBody += 1;
+      }
     }
   }
   return withBody;
