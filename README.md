@@ -17,6 +17,7 @@ npm run build
 - HTML scraping fallback can be disabled: set `FETCH_ARTICLE_BODY_SCRAPE=false` (default) to rely solely on API-provided bodies; set to `true` only if you want to scrape URLs when the API omits body.
 - For a single poll run (useful in CI/tests), set `POLL_ONCE=true`.
 - Persistence: if `DATABASE_URL` (or `NEON_DATABASE_URL`) is set, the poller uses Postgres with dedupe on `(source, url)`. Otherwise it falls back to in-memory for local smoke tests.
+- Initialize DB schema: `set -a && source .env && node -e "require('fs'); const {Pool}=require('pg'); const sql=require('fs').readFileSync('scripts/schema.sql','utf8'); const pool=new Pool({connectionString:process.env.DATABASE_URL||process.env.NEON_DATABASE_URL}); pool.query(sql).then(()=>{console.log('schema applied'); pool.end();});"`
 
 ## Netlify
 - Build command: `npm run build`
