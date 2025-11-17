@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parcel News Pipeline</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; color: #0f172a; }
+      code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px; }
+      h1 { margin-bottom: 0.5rem; }
+      h2 { margin-top: 1.5rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Parcel News Pipeline</h1>
+    <p>Live site placeholder. This app ingests parcel-carrier news, classifies relevance, extracts cost-impact levers, and dedupes into canonical events for downstream calculators.</p>
+    <h2>Build Phases</h2>
+    <ol>
+      <li>Foundations: shared enums/schemas and config.</li>
+      <li>Ingestion & Storage: fetch + persist raw articles.</li>
+      <li>Stage 1 Relevance: cheap classifier.</li>
+      <li>Stage 2 Extraction: structured lever extraction + signature.</li>
+      <li>Event Dedupe: canonical event merge.</li>
+      <li>Calculator Interface & Ops.</li>
+    </ol>
+    <p>See repository README for details and the spec in <code>Documents/parcel_news_pipeline_spec (1).md</code>.</p>
+  </body>
+</html>
