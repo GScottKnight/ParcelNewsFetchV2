@@ -91,6 +91,8 @@ export async function fetchBenzingaNews(params?: {
     format: "json",
     display_output: newsDisplayOutput || "full",
   });
+  // Some integrations use camelCase; we attach both to maximize compatibility.
+  searchParams.append("displayOutput", newsDisplayOutput || "full");
   if (params?.updatedSince) searchParams.append("updatedSince", String(params.updatedSince));
   if (params?.tickers?.length) searchParams.append("tickers", params.tickers.join(","));
   if (params?.channels?.length) searchParams.append("channels", params.channels.join(","));
