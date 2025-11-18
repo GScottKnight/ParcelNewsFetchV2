@@ -3,6 +3,7 @@ import { Stage2Repository } from "../storage/stage2Repository";
 import { extractStage2, toCanonicalEvent } from "./stage2Extractor";
 import { logger } from "../logger";
 import type { RawArticleRepository } from "../storage/rawArticleRepository";
+import { mergeLevers } from "../utils/leverMerge";
 
 const DEFAULT_BATCH_SIZE = 10;
 
@@ -34,8 +35,11 @@ export async function processStage2Batches(
       try {
         const extraction = await extractStage2(item.article);
         await stage2Repo.insertExtraction(item.raw_article_id, extraction);
-        const canonical = toCanonicalEvent(extraction);
-        await stage2Repo.upsertCanonical(canonical);
+        await stage2Repo.upsertCanonical(
+          toCanonicalEvent(extraction),
+          extraction,
+          item.raw_article_id,
+        );
         processed += 1;
         await rawRepo.markStatus([item.article], "processed");
         logger.info("Stage2 processed", {

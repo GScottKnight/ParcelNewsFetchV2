@@ -3,6 +3,7 @@ import type { Stage2ArticleExtraction, CanonicalEvent } from "../models/types";
 import { loadConfig } from "../config/env";
 import { logger } from "../logger";
 import { buildNormalizedEventSignature } from "../utils/eventSignature";
+import { mergeLevers } from "../utils/leverMerge";
 
 const STAGE2_SYSTEM_PROMPT = `
 Extract structured event data for parcel-carrier cost impacts.

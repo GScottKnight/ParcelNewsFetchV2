@@ -54,4 +54,18 @@ create table if not exists canonical_events (
   updated_at timestamptz default now()
 );
 
+-- Source linkage for canonical events
+create table if not exists canonical_event_sources (
+  id serial primary key,
+  canonical_event_id integer not null references canonical_events(id) on delete cascade,
+  raw_article_id integer not null references raw_articles(id) on delete cascade,
+  source_url text,
+  source_name text,
+  source_tier text,
+  publication_date timestamptz,
+  used_for_levers boolean default false,
+  created_at timestamptz default now()
+);
+create unique index if not exists canonical_event_sources_unique on canonical_event_sources(canonical_event_id, raw_article_id);
+
 create unique index if not exists stage1_results_raw_article_uidx on stage1_results(raw_article_id);
