@@ -6,40 +6,31 @@ import { buildNormalizedEventSignature } from "../utils/eventSignature";
 import { mergeLevers } from "../utils/leverMerge";
 
 const STAGE2_SYSTEM_PROMPT = `
-Extract structured event data for parcel-carrier cost impacts.
-Return a JSON object matching Stage2ArticleExtraction:
+You extract parcel-carrier cost-impact events. Output ONLY valid JSON per Stage2ArticleExtraction.
+
+Allowed enums:
+- carriers: "UPS","FedEx","Other"
+- source_tier: "carrier_official","major_news","industry_press","blog","other"
+- event_type: "annual_gri","fuel_table_update","new_surcharge","surcharge_removed","dim_formula_change","min_charge_change","peak_surcharge_announcement","targeted_program_change","contractual_change","other"
+- cost_component: "BaseTariff","FSC","AHC","LPS","DAS","EDAS","RAS","MPC","DIM","PeakSurcharge","Other"
+- impact_direction: "increase","decrease","mixed","unclear"
+- geographic_scope: "US","EU","Global","SpecificCountries","Unknown"
+- unit: "per_package","per_lb","per_kg","per_shipment","other"
+
+Schema shape:
 {
-  "article_metadata": {
-    "title": string,
-    "source_url": string,
-    "source_name": string,
-    "publication_date": string (ISO),
-    "source_tier": "carrier_official"|"major_news"|"industry_press"|"blog"|"other"
-  },
-  "event_summary": {
-    "carrier": ["UPS"|"FedEx"|"Other"],
-    "event_type": "...",
-    "short_description": string,
-    "announcement_date": string|null,
-    "effective_date": string|null,
-    "geographic_scope": "US"|"EU"|"Global"|"SpecificCountries"|"Unknown",
-    "countries": [],
-    "impact_direction_overall": "increase"|"decrease"|"mixed"|"unclear",
-    "details_available": boolean,
-    "details_confidence": number
-  },
-  "levers": [...],
-  "event_signature_fields": {
-    "carrier": "...",
-    "primary_component": "...",
-    "event_type": "...",
-    "effective_date": string|null,
-    "geographic_scope": "US"|"EU"|"Global"|"SpecificCountries"|"Unknown"
-  },
+  "article_metadata": { title, source_url, source_name, publication_date (ISO), source_tier },
+  "event_summary": { carrier[], event_type, short_description, announcement_date, effective_date, geographic_scope, countries[], impact_direction_overall, details_available, details_confidence },
+  "levers": [
+    { lever_id, cost_component, change_type, impact_direction, percent_change?, absolute_change_per_unit?, unit?, service_scope, dim_change, dim_old_divisor?, dim_new_divisor?, min_charge_old?, min_charge_new?, peak_window?, peak_trigger_conditions?, details_available, details_confidence, impact_formula_hint?, supporting_snippets[] }
+  ],
+  "event_signature_fields": { carrier, primary_component, event_type, effective_date, geographic_scope },
   "normalized_event_signature": string,
   "extraction_confidence_overall": number,
   "notes": string
 }
+
+Be concise; fill null when unknown; use only allowed enum values.
 `.trim();
 
 function buildUserContent(article: RawNewsArticle, maxBodyChars: number): string {
