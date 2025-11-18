@@ -20,6 +20,11 @@
    ```bash
    set -a && source .env && node -e "const {Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL||process.env.NEON_DATABASE_URL});Promise.all([p.query('select ingestion_status,count(*) from raw_articles group by ingestion_status'), p.query('select is_relevant,count(*) from stage1_results group by is_relevant'), p.query('select count(*) from stage2_extractions'), p.query('select count(*) from canonical_events')]).then(([a,b,c,d])=>{console.log('raw',a.rows); console.log('stage1',b.rows); console.log('stage2_extractions',c.rows); console.log('canonical_events',d.rows); p.end();});"
    ```
+4) List canonical events (optional):
+   ```bash
+   set -a && source .env
+   SINCE=2025-11-15T00:00:00Z node scripts/list_canonical_events.js
+   ```
 
 ## Relevant Hits
 - 5 relevant articles detected by Stage1 (details in `stage1_results`). Stage2 has processed these in current smoke run (see canonical_events/stage2_extractions).
