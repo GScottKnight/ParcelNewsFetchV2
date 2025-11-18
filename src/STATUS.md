@@ -5,30 +5,30 @@
 - Raw articles in DB: 1,170
 
 ## Stage 1 Classification
-- Processed: 429
-- Remaining (ingestion_status = 'new'): 741
-- Stage1 results stored: 429 total (428 not relevant, 1 relevant)
+- Processed: 1,170 (all)
+- Remaining (ingestion_status = 'new'): 0
+- Stage1 results stored: 1,170 total (1,165 not relevant, 5 relevant)
 
 ## How to Continue Processing
 1) Ensure `.env` is loaded (has DB + OpenAI keys).
-2) Run Stage1 batches until no `new` articles remain:
+2) Stage2 candidates: 5 relevant articles (from Stage1 results) remain; run Stage2 batches:
    ```bash
    set -a && source .env
-   STAGE1_BATCH_SIZE=50 STAGE1_MAX_MINUTES=20 scripts/run_stage1_batches.js
-   # repeat as needed
+   STAGE2_BATCH_SIZE=5 STAGE2_MAX_MINUTES=5 node -e "const {processStage2Batches}=require('./dist/server/pipeline/stage2Batch'); const {makeRawRepo}=require('./dist/server/pipeline/poller'); (async()=>{await processStage2Batches(makeRawRepo(), 5, 5);})();"
    ```
 3) Check counts:
    ```bash
-   set -a && source .env && node -e "const {Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL||process.env.NEON_DATABASE_URL});Promise.all([p.query('select ingestion_status,count(*) from raw_articles group by ingestion_status'), p.query('select is_relevant,count(*) from stage1_results group by is_relevant')]).then(([a,b])=>{console.log('raw',a.rows); console.log('stage1',b.rows); p.end();});"
+   set -a && source .env && node -e "const {Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL||process.env.NEON_DATABASE_URL});Promise.all([p.query('select ingestion_status,count(*) from raw_articles group by ingestion_status'), p.query('select is_relevant,count(*) from stage1_results group by is_relevant'), p.query('select count(*) from stage2_extractions'), p.query('select count(*) from canonical_events')]).then(([a,b,c,d])=>{console.log('raw',a.rows); console.log('stage1',b.rows); console.log('stage2_extractions',c.rows); console.log('canonical_events',d.rows); p.end();});"
    ```
 
 ## Relevant Hits
-- Currently 1 relevant article detected by Stage1 (details in `stage1_results`). Stage2 not run yet.
+- 5 relevant articles detected by Stage1 (details in `stage1_results`). Stage2 has processed these in current smoke run (see canonical_events/stage2_extractions).
 
 ## Notes
 - Stage1 uses OpenAI if `STAGE1_DRY_RUN=false` and `OPENAI_API_KEY` is set; batches persist results to `stage1_results` and update `raw_articles.ingestion_status` to `processed`.
-- Schema applied via `scripts/schema.sql`; `raw_articles` deduped on (source, url); `stage1_results` unique per raw_article_id.
-- Stage1 batching script: `scripts/run_stage1_batches.js` (uses env vars above).
+- Stage2 uses OpenAI if `STAGE2_DRY_RUN=false`; outputs go to `stage2_extractions` and upsert into `canonical_events`.
+- Schema applied via `scripts/schema.sql`; `raw_articles` deduped on (source, url); `stage1_results` unique per raw_article_id; `stage2_extractions` unique per raw_article_id; `canonical_events` unique on normalized_signature.
+- Stage1 batching script: `scripts/run_stage1_batches.js`; Stage2 batch runner is invoked directly via `processStage2Batches` (see command above).
 
 ## Next Steps After Stage1 Completes
 - Export relevant articles and begin Stage2 extraction using the spec's schema.

@@ -20,6 +20,7 @@ npm run build
 - Initialize DB schema: `set -a && source .env && node -e "require('fs'); const {Pool}=require('pg'); const sql=require('fs').readFileSync('scripts/schema.sql','utf8'); const pool=new Pool({connectionString:process.env.DATABASE_URL||process.env.NEON_DATABASE_URL}); pool.query(sql).then(()=>{console.log('schema applied'); pool.end();});"`
 - Stage1 batching script: `set -a && source .env && STAGE1_BATCH_SIZE=50 STAGE1_MAX_MINUTES=20 scripts/run_stage1_batches.js` (rerun until `raw_articles` shows no `new`). See `src/STATUS.md` for current counts/progress.
 - Verify counts: `set -a && source .env && node -e "const {Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL||process.env.NEON_DATABASE_URL});Promise.all([p.query('select ingestion_status,count(*) from raw_articles group by ingestion_status'), p.query('select is_relevant,count(*) from stage1_results group by is_relevant')]).then(([a,b])=>{console.log('raw',a.rows); console.log('stage1',b.rows); p.end();});"`
+- Stage2 batches: use `processStage2Batches` script snippet (see `src/STATUS.md`) after Stage1 relevance is done; results stored in `stage2_extractions` and `canonical_events`.
 
 ## Netlify
 - Build command: `npm run build`

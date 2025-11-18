@@ -94,6 +94,40 @@ export class PostgresRawArticleRepository implements RawArticleRepository {
     }));
   }
 
+  async fetchRelevantForStage2(limit: number): Promise<
+    { raw_article_id: number; article: RawNewsArticle }[]
+  > {
+    const pool = getPool();
+    const res = await pool.query(
+      `
+      select ra.id as raw_article_id, ra.external_id, ra.source, ra.url, ra.title, ra.published_at, ra.updated_at, ra.tickers, ra.channels, ra.body, ra.ingestion_status, s1.source_tier
+      from raw_articles ra
+      join stage1_results s1 on s1.raw_article_id = ra.id
+      left join stage2_extractions s2 on s2.raw_article_id = ra.id
+      where s1.is_relevant = true and s2.id is null
+      order by ra.published_at desc
+      limit $1
+    `,
+      [limit],
+    );
+    return res.rows.map((r) => ({
+      raw_article_id: r.raw_article_id,
+      article: {
+        id: r.external_id,
+        source: r.source,
+        url: r.url,
+        title: r.title,
+        publishedAt: r.published_at,
+        updatedAt: r.updated_at,
+        tickers: Array.isArray(r.tickers) ? r.tickers : [],
+        channels: Array.isArray(r.channels) ? r.channels : [],
+        body: r.body || undefined,
+        sourceTier: r.source_tier || "other",
+        ingestionStatus: r.ingestion_status,
+      },
+    }));
+  }
+
   // Utility to allow testing of dedupe keys
   makeKey(article: RawNewsArticle): string {
     return rawArticleKey(article);

@@ -32,4 +32,26 @@ create table if not exists stage1_results (
 
 create index if not exists stage1_results_is_relevant_idx on stage1_results(is_relevant);
 
+-- Stage2 extractions
+create table if not exists stage2_extractions (
+  id serial primary key,
+  raw_article_id integer not null references raw_articles(id) on delete cascade,
+  extraction jsonb not null,
+  normalized_signature text,
+  status text default 'processed',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create unique index if not exists stage2_extractions_raw_article_uidx on stage2_extractions(raw_article_id);
+create index if not exists stage2_extractions_norm_sig_idx on stage2_extractions(normalized_signature);
+
+-- Canonical events
+create table if not exists canonical_events (
+  id serial primary key,
+  normalized_signature text not null unique,
+  event jsonb not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 create unique index if not exists stage1_results_raw_article_uidx on stage1_results(raw_article_id);

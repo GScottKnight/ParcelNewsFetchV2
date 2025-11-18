@@ -14,6 +14,9 @@ export type AppConfig = {
   stage1Model: string;
   stage1DryRun: boolean;
   stage1MaxBodyChars: number;
+  stage2Model: string;
+  stage2DryRun: boolean;
+  stage2MaxBodyChars: number;
 };
 
 function requireEnv(name: string, fallback?: string): string {
@@ -37,5 +40,8 @@ export function loadConfig(): AppConfig {
     stage1Model: process.env.STAGE1_MODEL ?? "gpt-4o-mini",
     stage1DryRun: process.env.STAGE1_DRY_RUN === "true" || !process.env.OPENAI_API_KEY,
     stage1MaxBodyChars: Number(process.env.STAGE1_MAX_BODY_CHARS ?? "4000"),
+    stage2Model: process.env.STAGE2_MODEL ?? "gpt-4o-mini",
+    stage2DryRun: process.env.STAGE2_DRY_RUN === "true" || !process.env.OPENAI_API_KEY,
+    stage2MaxBodyChars: Number(process.env.STAGE2_MAX_BODY_CHARS ?? "8000"),
   };
 }
