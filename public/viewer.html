@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parcel Pipeline Viewer</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 1rem; color: #0f172a; }
+      h1 { margin-bottom: 0.5rem; }
+      .card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; background: #f8fafc; }
+      .small { font-size: 0.9rem; color: #475569; }
+      .pill { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; background: #e2e8f0; margin-right: 0.3rem; }
+      pre { white-space: pre-wrap; word-break: break-word; background: #1e293b; color: #e2e8f0; padding: 0.5rem; border-radius: 6px; }
+      button { margin-right: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Parcel Pipeline Viewer</h1>
+    <div>
+      <button id="refresh-canonical">Load Canonical Events</button>
+      <button id="refresh-stage2">Load Stage2 Extractions</button>
+      <button id="refresh-stage1">Load Stage1 Relevant</button>
+    </div>
+    <div id="status" class="small"></div>
+    <h2>Canonical Events</h2>
+    <div id="canonical"></div>
+    <h2>Stage2 Extractions</h2>
+    <div id="stage2"></div>
+    <h2>Stage1 Relevant</h2>
+    <div id="stage1"></div>
+
+    <script>
+      const statusEl = document.getElementById('status');
+      const setStatus = (msg) => { statusEl.textContent = msg; };
+
+      async function fetchJSON(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+      }
+
+      function renderCanonical(data) {
+        const root = document.getElementById('canonical');
+        root.innerHTML = '';
+        data.forEach((row) => {
+          const ev = row.event || {};
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div><strong>${ev.short_description || row.normalized_signature}</strong></div>
+            <div class="small">Signature: ${row.normalized_signature}</div>
+            <div class="small">Updated: ${row.updated_at}</div>
+            <div class="small">Carrier: ${ev.carrier || ev.carrier?.join?.(',') || ''} | Component: ${ev.primary_component || ''} | Event Type: ${ev.event_type || ''}</div>
+            <div class="small">Effective: ${ev.effective_date || 'n/a'}</div>
+            <div class="small">Levers: ${(ev.levers || []).length}</div>
+            <div class="small">Sources: ${(row.source_urls || []).map((s) => `<span class='pill'>${s}</span>`).join('')}</div>
+          `;
+          root.appendChild(div);
+        });
+      }
+
+      function renderStage2(data) {
+        const root = document.getElementById('stage2');
+        root.innerHTML = '';
+        data.forEach((row) => {
+          const ext = row.extraction || {};
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div><strong>${row.title}</strong></div>
+            <div class="small"><a href="${row.url}" target="_blank">${row.url}</a></div>
+            <div class="small">Signature: ${row.normalized_signature || ext.normalized_event_signature || ''}</div>
+            <div class="small">Levers: ${(ext.levers || []).length}</div>
+            <details><summary>Extracted JSON</summary><pre>${JSON.stringify(ext, null, 2)}</pre></details>
+          `;
+          root.appendChild(div);
+        });
+      }
+
+      function renderStage1(data) {
+        const root = document.getElementById('stage1');
+        root.innerHTML = '';
+        data.forEach((row) => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div><strong>${row.title}</strong></div>
+            <div class="small"><a href="${row.url}" target="_blank">${row.url}</a></div>
+            <div class="small">Reason: ${row.relevance_reason}</div>
+            <div class="small">Confidence: ${row.confidence}</div>
+            <div class="small">Carriers: ${(row.carrier_mentions || []).join(', ')}</div>
+          `;
+          root.appendChild(div);
+        });
+      }
+
+      async function loadCanonical() {
+        setStatus('Loading canonical events...');
+        const data = await fetchJSON('/api/canonical');
+        renderCanonical(data);
+        setStatus('');
+      }
+      async function loadStage2() {
+        setStatus('Loading Stage2 extractions...');
+        const data = await fetchJSON('/api/stage2');
+        renderStage2(data);
+        setStatus('');
+      }
+      async function loadStage1() {
+        setStatus('Loading Stage1 relevant...');
+        const data = await fetchJSON('/api/stage1_relevant');
+        renderStage1(data);
+        setStatus('');
+      }
+
+      document.getElementById('refresh-canonical').onclick = loadCanonical;
+      document.getElementById('refresh-stage2').onclick = loadStage2;
+      document.getElementById('refresh-stage1').onclick = loadStage1;
+
+      loadCanonical();
+      loadStage2();
+      loadStage1();
+    </script>
+  </body>
+</html>
